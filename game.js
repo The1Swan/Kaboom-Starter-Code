@@ -11,7 +11,8 @@ setGravity(800);
 // --- Load Assets ---
 // For Day 1, we only need the player's sprite.
 loadSprite("apple", "https://kaboomjs.com/sprites/apple.png");
-
+//Enemy Sprite
+loadSprite("enemy", "https://kaboomjs.com/sprites/gigagantrum.png")
 
 // --- Main Game Scene ---
 scene("main", () => {
@@ -19,11 +20,17 @@ scene("main", () => {
     // --- The Level Design ---
     const levelLayout = [
         "                    ",
+        "  =                 ",
+        "          ==        ",
+        " =                  ",
+        "         ===        ",
+        "                  = ",
+        "      =             ",
         "                    ",
-        "    =         =     ",
-        "                    ",
-        "  =       =      =  ",
-        "                    ",
+        "              =     ",
+        "      =             ",
+        "  =              =  ",
+        "         =          ",
         "====================",
     ];
 
@@ -53,6 +60,35 @@ scene("main", () => {
         "player",
     ]);
 
+
+    //Enemy Patrol
+    function patrol(){
+        return{
+            id:["pos", "area"],
+            dir: -1,
+            update(){
+                this.move(60 * this.dir, 0)
+            },
+            //This next event will flip direction if the enemy collides with somehting
+            add(){
+                this.onCollide((obj, col) => {
+                    if (col.isLeft() || col.isRight()){
+                        this.dir = -this.dir
+                    }
+                });
+            },
+        };
+    }
+    //Add enemy to the scene
+    const enemy = add([
+        sprite("enemy"),
+        pos(600, 200), //Star position for the enemy
+        area(),
+        body(),
+        patrol(),//Use the patrol function we just defined
+        "enemy",
+    ])
+
     // --- Player Controls & Interactions ---
     onKeyDown("left", () => {
         player.move(-200, 0);
@@ -62,12 +98,34 @@ scene("main", () => {
         player.move(200, 0);
     });
 
-    onKeyPress("space", () => {
+    onKeyPress("up", () => {
         if (player.isGrounded()) {
             player.jump(650);
         }
     });
+
+    //Collision Detection
+    player.onCollide("enemy",(enemy,col) =>{
+        if(col.isBottom){
+            destroy(enemy);
+            player.jump(300);
+        }
+        else{
+            destroy(player);
+            go("lose");
+        }
+    });
 });
+
+//--Game Over Scene 
+scene("lose", () =>{
+    add([
+        text("Game Over"),
+        pos(center()),
+        anchor("center"),
+    ]);
+});
+
 
 // Start the game
 go("main");
