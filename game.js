@@ -9,29 +9,30 @@ kaboom({
 setGravity(800);
 
 // --- Load Assets ---
-// For Day 1, we only need the player's sprite.
-loadSprite("apple", "https://kaboomjs.com/sprites/apple.png");
-//Enemy Sprite
-loadSprite("enemy", "https://kaboomjs.com/sprites/gigagantrum.png")
+// We must load all sprites before we can use them in the game.
+loadSprite("meat", "https://kaboomjs.com/sprites/meat.png");
+// This was the missing line! Now the game knows what an "enemy" looks like.
+loadSprite("enemy", "https://kaboomjs.com/sprites/gigagantrum.png");
+
 
 // --- Main Game Scene ---
 scene("main", () => {
 
     // --- The Level Design ---
-    const levelLayout = [
-        "                    ",
-        "  =                 ",
-        "          ==        ",
-        " =                  ",
-        "         ===        ",
-        "                  = ",
-        "      =             ",
-        "                    ",
-        "              =     ",
-        "      =             ",
-        "  =              =  ",
-        "         =          ",
-        "====================",
+    const levelLayout = [ 
+        "                    ", 
+        "  =                 ", 
+        "          ==        ", 
+        " =                  ", 
+        "         ===        ", 
+        "                  = ", 
+        "      =             ", 
+        "                    ", 
+        "              =     ", 
+        "      =             ", 
+        "  =              =  ", 
+        "         =          ", 
+        "====================", 
     ];
 
     // Configure what each symbol in the level layout means.
@@ -53,41 +54,46 @@ scene("main", () => {
 
     // --- The Player Character ---
     const player = add([
-        sprite("apple"),
+        sprite("meat"),
         pos(100, 100),
         area({ scale: 0.7 }),
         body(),
         "player",
     ]);
 
-
-    //Enemy Patrol
-    function patrol(){
-        return{
-            id:["pos", "area"],
+    // --- The Enemy Character ---
+    // This function DEFINES the patrol component for our enemy
+    function patrol() {
+        return {
+            id: "patrol",
+            require: [ "pos", "area", ],
             dir: -1,
-            update(){
-                this.move(60 * this.dir, 0)
+            update() {
+                this.move(60 * this.dir, 0);
             },
-            //This next event will flip direction if the enemy collides with somehting
-            add(){
+            // This event flips the direction when the enemy collides with something
+            add() {
                 this.onCollide((obj, col) => {
-                    if (col.isLeft() || col.isRight()){
-                        this.dir = -this.dir
+                    // The isSide() function doesn't exist.
+                    // Instead, we check if the collision is from the left OR the right.
+                    if (col.isLeft() || col.isRight()) {
+                        this.dir = -this.dir;
                     }
                 });
             },
         };
     }
-    //Add enemy to the scene
+
+    // Add an enemy to the scene
     const enemy = add([
         sprite("enemy"),
-        pos(600, 200), //Star position for the enemy
+        pos(600, 200), // Start position for the enemy
         area(),
         body(),
-        patrol(),//Use the patrol function we just defined
-        "enemy",
-    ])
+        patrol(), // Use the patrol component we just defined
+        "enemy"
+    ]);
+
 
     // --- Player Controls & Interactions ---
     onKeyDown("left", () => {
@@ -104,30 +110,34 @@ scene("main", () => {
         }
     });
 
-    //Collision Detection
-    player.onCollide("enemy",(enemy,col) =>{
-        if(col.isBottom){
+    player.onCollide("enemy", (enemy, col) => {
+        // If the player lands on top of the enemy
+        if (col.isBottom()) {
             destroy(enemy);
             player.jump(300);
-        }
-        else{
+        } else {
+            // If the player hits the enemy from the side
             destroy(player);
-            go("lose");
+            go("lose"); // Go to the lose scene
         }
     });
 });
 
-//--Game Over Scene 
-scene("lose", () =>{
+
+// --- Game Over Scene ---
+scene("lose", () => {
     add([
         text("Game Over"),
         pos(center()),
         anchor("center"),
     ]);
-});
 
+    // Go back to the main game after 2 seconds
+    wait(2, () => {
+        go("main");
+    });
+});
 
 // Start the game
 go("main");
-
 
